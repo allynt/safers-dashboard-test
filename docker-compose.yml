@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+
+  safers-db:
+    image: kartoza/postgis:latest
+    environment:
+      POSTGRES_DBNAME: safers_db
+      POSTGRES_USER: safers_user
+      POSTGRES_PASS: safers_pwd
+      ALLOW_IP_RANGE: 0.0.0.0/0
+    networks:
+      - safers
+    ports:
+      - "5666:5432"
+
+
+
+networks:
+  safers:
+    name: safers
+    driver: bridge
