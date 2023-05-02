@@ -14,7 +14,48 @@ services:
     ports:
       - "5666:5432"
 
-
+  safers-auth-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: fusionauth_user
+      POSTGRES_PASSWORD: fusionauth_pwd
+    healthcheck:
+      test: "pg_isready -U fusionauth_user"
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - safers
+    restart: unless-stopped
+   
+  safers-auth:
+    image: fusionauth/fusionauth-app:latest
+    depends_on:
+      safers-auth-db:
+        condition: service_healthy
+    env_file:
+      - ./auth/.env
+    environment:
+      DATABASE_URL: jdbc:postgresql://safers-auth-db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: fusionauth_user
+      DATABASE_ROOT_PASSWORD: fusionauth_pwd
+      DATABASE_USERNAME: fusionauth_user
+      DATABASE_PASSWORD: fusionauth_pwd
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      FUSIONAUTH_APP_KICKSTART_FILE: /usr/local/fusionauth/kickstart/kickstart.json
+      FUSIONAUTH_APP_MEMORY: 512M
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_TYPE: database
+    restart: unless-stopped
+    volumes:
+      - ./auth/config:/usr/local/fusionauth/confg
+      - ./auth/kickstart:/usr/local/fusionauth/kickstart
+      # - ./auth/plugins:/usr/local/fusionauth/plugins
+    networks:
+      - safers
+    ports:
+      - "9011:9011"
 
 networks:
   safers:
