@@ -1,0 +1,52 @@
+
+[project]
+#name = "safers-dashboard-test"
+#version = "0.1.0"
+authors = [
+    {name = "Astrosat", email = "info@astrosat.net"},
+]
+dependencies = [
+    "django[argon2]>=4.2",
+    "djangorestframework>=3.14.0",
+    "djangorestframework-gis>=1.0",
+    "django-colorfield>=0.8.0",
+    "django-cors-headers>=3.14.0",
+    "django-dbbackup>=4.0.2",
+    "django-environ>=0.10.0",
+    "django-sequences>=2.7",
+    "django-storages>=1.13.2",
+    "dj-database-url>=2.0.0",
+    "drf-spectacular[sidecar]>=0.26.2",
+    "boto3>=1.26.124",
+    "psycopg2-binary>=2.9.6",
+    "tzdata>=2023.3",
+    "django-on-heroku>=1.1.2",
+    "fusionauth-client>=1.45.0",
+]
+requires-python = ">=3.10"
+
+[tool.pdm]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pylint",
+    "yapf",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-confluencebuilder",
+    "sphinxcontrib-django",
+    "myst-parser",
+    "python-dotenv",
+]
+test = [
+    "pytest",
+    "pytest-django",
+    "pytest-html-reporter",
+    "factory-boy",
+]
+
+[tool.pdm.scripts]
+docs = {shell = "cd ../docs && make html"}
+test = "pytest"

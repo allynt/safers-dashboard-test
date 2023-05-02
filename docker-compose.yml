@@ -27,7 +27,7 @@ services:
     networks:
       - safers
     restart: unless-stopped
-   
+
   safers-auth:
     image: fusionauth/fusionauth-app:latest
     depends_on:
@@ -56,6 +56,24 @@ services:
       - safers
     ports:
       - "9011:9011"
+
+  safers-server:
+    build:
+      context: .
+    tty: true
+    env_file:
+      - .env
+    environment:
+      ENABLE_DJANGO: 1
+      DJANGO_SETTINGS_MODULE: config.settings
+    working_dir: /home/app/server
+    volumes:
+      - ./server:/home/app/server
+    ports:
+      - "8000:8000" # API
+      - "8080:8080" # profiling
+    networks:
+      - safers
 
 networks:
   safers:
