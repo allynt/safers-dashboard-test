@@ -98,7 +98,10 @@ LOGGING = {
             "level": "WARNING"
         },
         "django.utils.autoreload": {
-            "level": "INFO"
+            "level": "WARNING"
+        },
+        "faker": {
+            "level": "WARNING"
         },
     },
     "root": {

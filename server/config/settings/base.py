@@ -71,7 +71,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "safers.core",
-    "safers.users",  # "safers.auth",
+    "safers.users",
+    "safers.auth",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -208,6 +209,14 @@ AUTHENTICATION_BACKENDS = [
     # TODO: REFACTOR THIS
     "django.contrib.auth.backends.ModelBackend",
 ]
+
+FUSIONAUTH_API_KEY = env("FUSIONAUTH_API_KEY", default="")
+FUSIONAUTH_APPLICATION_ID = env("FUSIONAUTH_APPLICATION_ID", default="")
+FUSIONAUTH_CLIENT_ID = env("FUSIONAUTH_CLIENT_ID", default="")
+FUSIONAUTH_CLIENT_SECRET = env("FUSIONAUTH_CLIENT_SECRET", default="")
+FUSIONAUTH_URL = env("FUSIONAUTH_URL", default="")
+FUSIONAUTH_EXTERNAL_URL = env("FUSIONAUTH_EXTERNAL_URL", default=FUSIONAUTH_URL)
+FUSIONAUTH_INTERNAL_URL = env("FUSIONAUTH_EXTERNAL_URL", default=FUSIONAUTH_URL)
 
 #############
 # Passwords #

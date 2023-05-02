@@ -15,7 +15,7 @@ class Colors(str, Enum):
 
 
 FormatMap = {
-    logging.DEBUG: Colors.WHITE.value,
+    logging.DEBUG: Colors.DEFAULT.value,
     logging.INFO: Colors.DEFAULT.value,
     logging.WARNING: Colors.YELLOW.value,
     logging.ERROR: Colors.RED.value,

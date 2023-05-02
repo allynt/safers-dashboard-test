@@ -1,2 +1,4 @@
 from .serializers_profiles import UserProfileSerializer
 from .serializers_users import UserSerializer
+from .serializers_organizations import OrganizationSerializer
+from .serializers_roles import RoleSerializer
