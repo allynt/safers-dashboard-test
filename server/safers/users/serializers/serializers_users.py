@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from safers.users.models import User
+from safers.users.serializers import UserProfileSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -13,4 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
             "status",
             "accepted_terms",
             "change_password",
+            "profile",
         )
+
+    profile = UserProfileSerializer()
