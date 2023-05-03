@@ -60,8 +60,8 @@ MOCK_ROLES_DATA = [
         "isSuperRole": False,
     },
     {
-        "name": "first_responder",
         "id": "4383a40a-59ae-4dc2-9d47-a8db0909e9c0",
+        "name": "first_responder",
         "description": "On-field role: First Responders can make reports and accomplish missions",
         "isDefault": False,
         "isSuperRole": False,

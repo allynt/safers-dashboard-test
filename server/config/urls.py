@@ -15,10 +15,10 @@ from safers.core.urls import (
     api_urlpatterns as core_api_urlpatterns,
 )
 
-# from safers.auth.urls import (
-#     urlpatterns as auth_urlpatterns,
-#     api_urlpatterns as auth_api_urlpatterns,
-# )
+from safers.auth.urls import (
+    urlpatterns as auth_urlpatterns,
+    api_urlpatterns as auth_api_urlpatterns,
+)
 
 from safers.users.urls import (
     urlpatterns as users_urlpatterns,
@@ -69,7 +69,7 @@ api_urlpatterns = [
 ]
 
 api_urlpatterns += core_api_urlpatterns
-# api_urlpatterns += auth_api_urlpatterns
+api_urlpatterns += auth_api_urlpatterns
 api_urlpatterns += users_api_urlpatterns
 
 #################
@@ -85,7 +85,7 @@ urlpatterns = [
 
     # app-specific patterns (just in case)...
     path("", include(core_urlpatterns)),
-    # path("auth", include(auth_urlpatterns)),
+    path("auth", include(auth_urlpatterns)),
     path("users", include(users_urlpatterns)),
 ]
 
