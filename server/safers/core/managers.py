@@ -46,7 +46,7 @@ class CachedTransientModelManager(models.Manager):
     cache_key = None
     cache_name = "default"
     cache_sentinel = object()
-    cache_timeout = (60 * 15)  # number of seconds before value expires; None means no expiry, 0 means no caching  
+    cache_timeout = (60 * 60)  # number of seconds before value expires; None means no expiry, 0 means no caching  
 
     def __init__(self, **kwargs) -> None:
         super().__init__()

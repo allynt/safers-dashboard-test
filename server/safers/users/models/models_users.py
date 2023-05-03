@@ -1,14 +1,15 @@
-from email.headerregistry import HeaderRegistry
 import uuid
 
-from django.apps import apps
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import models
 from django.db.models.expressions import ExpressionWrapper
 from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
+
+from safers.users.models import Organization, Role
 
 ###########
 # helpers #
@@ -136,6 +137,18 @@ class User(AbstractUser):
         help_text=_("What stage of registration is this user at?")
     )
 
+    organization_name = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+    )
+
+    role_name = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+    )
+
     @property
     def is_local(self):
         return self.auth_id is None
@@ -143,3 +156,17 @@ class User(AbstractUser):
     @property
     def is_remote(self):
         return self.auth_id is not None
+
+    @property
+    def organization(self):
+        try:
+            return Organization.objects.get(name=self.organization_name)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            pass
+
+    @property
+    def role(self):
+        try:
+            return Role.objects.get(name=self.role_name)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            pass

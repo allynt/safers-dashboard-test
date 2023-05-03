@@ -14,6 +14,8 @@ class UserSerializer(serializers.ModelSerializer):
             "status",
             "accepted_terms",
             "change_password",
+            "organization",
+            "role",
             "profile",
         )
 

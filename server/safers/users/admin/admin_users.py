@@ -54,6 +54,7 @@ class UserAdmin(DjangoUserAdmin):
         (
             _("Permissions"),
             {
+                "classes": ("collapse", ),
                 "fields": (
                     "is_active",
                     "is_staff",
@@ -63,14 +64,18 @@ class UserAdmin(DjangoUserAdmin):
                 ),
             },
         ),
-        (_("Important dates"), {
-            "fields": ("last_login", "date_joined")
-        }),  # (
-  #     _("Safers"),
-  #     {
-  #         "fields": ()
-  #     }
-  # ),
+        (
+            _("Important dates"), {
+                "classes": ("collapse", ),
+                "fields": ("last_login", "date_joined")
+            }
+        ),
+        (_("Safers"), {
+            "fields": (
+                "organization_name",
+                "role_name",
+            )
+        }),
     )
     filter_horizontal = (
         "groups",
