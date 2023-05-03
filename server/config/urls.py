@@ -10,10 +10,10 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from config.types import EnvironmentTypes
 
-# from safers.core.urls import (
-#     urlpatterns as core_urlpatterns,
-#     api_urlpatterns as core_api_urlpatterns,
-# )
+from safers.core.urls import (
+    urlpatterns as core_urlpatterns,
+    api_urlpatterns as core_api_urlpatterns,
+)
 
 # from safers.auth.urls import (
 #     urlpatterns as auth_urlpatterns,
@@ -68,7 +68,7 @@ api_urlpatterns = [
     path("", include(api_router.urls)),
 ]
 
-# api_urlpatterns += core_api_urlpatterns
+api_urlpatterns += core_api_urlpatterns
 # api_urlpatterns += auth_api_urlpatterns
 api_urlpatterns += users_api_urlpatterns
 
@@ -84,7 +84,7 @@ urlpatterns = [
     path("api/", include(api_urlpatterns)),
 
     # app-specific patterns (just in case)...
-    # path("", include(core_urlpatterns)),
+    path("", include(core_urlpatterns)),
     # path("auth", include(auth_urlpatterns)),
     path("users", include(users_urlpatterns)),
 ]
