@@ -1,0 +1,46 @@
+import requests
+from urllib.parse import urljoin, urlencode
+
+from django.conf import settings
+
+REQUEST_TIMEOUT = 40
+
+requests_session = requests.Session()
+
+# TODO: CAN PreparedRequests HELP SPEED THINGS UP ?
+# TODO: (as per https://requests.readthedocs.io/en/latest/user/advanced/#prepared-requests)
+
+class GatewayClient(object):
+
+    PROFILE_PATH = "api/services/app/Profile"
+
+    headers={
+        "Content-Type": "application/json", 
+        "accept": "application/json",
+    }
+
+    def get_profile(self, params=None, auth=None, timeout=REQUEST_TIMEOUT):
+        url = urljoin(settings.SAFERS_GATEWAY_URL, f"{self.PROFILE_PATH}/GetProfile")
+        response = requests_session.request(
+            method="GET",
+            headers=self.headers,
+            url=url,
+            params=params,
+            auth=auth,
+            timeout=timeout,
+        )
+        return response.json()
+    
+    def update_profile(self, data=None, auth=None, timeout=REQUEST_TIMEOUT):
+        url = urljoin(settings.SAFERS_GATEWAY_URL, f"{self.PROFILE_PATH}/UpdateProfile")
+        response = requests_session.request(
+            method="PUT",
+            headers=self.headers,
+            url=url,
+            json=data,
+            auth=auth,
+            timeout=timeout,
+        )
+        return response.json()
+
+GATEWAY_CLIENT = GatewayClient()

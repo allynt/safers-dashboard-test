@@ -85,8 +85,8 @@ urlpatterns = [
 
     # app-specific patterns (just in case)...
     path("", include(core_urlpatterns)),
-    path("auth", include(auth_urlpatterns)),
-    path("users", include(users_urlpatterns)),
+    path("", include(auth_urlpatterns)),
+    path("", include(users_urlpatterns)),
 ]
 
 # local static & media files...

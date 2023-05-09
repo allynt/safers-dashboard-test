@@ -15,6 +15,7 @@ from rest_framework.validators import UniqueValidator
 from drf_spectacular.utils import extend_schema_serializer
 
 from safers.core.models import SafersSettings
+from safers.core.serializers import ContextVariableDefault
 
 from safers.users.models import User, Organization, Role
 
@@ -41,6 +42,11 @@ class RegisterViewSerializer(serializers.Serializer):
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all())]
     )
+
+    username = serializers.CharField(
+        default=ContextVariableDefault("username", raise_error=True)
+    )
+
     password = serializers.CharField(style={"input_type": "password"})
 
     first_name = serializers.CharField(required=False, source="firstName")
@@ -82,4 +88,19 @@ class RegisterViewSerializer(serializers.Serializer):
                 "A citizen must not belong to an organization."
             )
 
+        return validated_data
+
+
+class AuthenticateViewSerializer(serializers.Serializer):
+
+    code = serializers.CharField(required=False)
+    locale = serializers.CharField(required=False)
+    userState = serializers.CharField(required=False)
+    error = serializers.CharField(required=False)
+
+    def validate(self, data):
+        validated_data = super().validate(data)
+        error = validated_data.get("error")
+        if error:
+            raise ValidationError(error)
         return validated_data

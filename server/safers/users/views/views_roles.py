@@ -24,7 +24,7 @@ class RoleView(ListAPIView):
     def get_queryset(self):
         """
         Using the get_queryset method instead of the queryset attribute.  This
-        provides graceful error handling when access safers-gateway.  It also 
+        provides graceful error handling when accessing safers-gateway.  It also 
         prevents that API from being accessed during swagger schema generation;
         Instead the swagger_fake decorator intenrcepts this call.
         """

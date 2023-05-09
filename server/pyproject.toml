@@ -13,6 +13,8 @@ dependencies = [
     "django-cors-headers>=3.14.0",
     "django-dbbackup>=4.0.2",
     "django-environ>=0.10.0",
+    "django-model-utils>=4.3.1",
+    "django-on-heroku>=1.1.2",
     "django-sequences>=2.7",
     "django-storages>=1.13.2",
     "dj-database-url>=2.0.0",
@@ -20,8 +22,8 @@ dependencies = [
     "boto3>=1.26.124",
     "psycopg2-binary>=2.9.6",
     "tzdata>=2023.3",
-    "django-on-heroku>=1.1.2",
     "fusionauth-client>=1.45.0",
+    "setuptools>=67.7.2",  # required by django-model-utils :(
 ]
 requires-python = ">=3.10"
 

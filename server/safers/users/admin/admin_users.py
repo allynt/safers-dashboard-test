@@ -1,9 +1,16 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.auth.forms import UserChangeForm as DjangoUserAdminForm
+from django.forms import ChoiceField
 from django.utils.translation import gettext_lazy as _
 
-from safers.users.models import User
+from safers.core.widgets import DataListWidget
+from safers.users.models import User, Organization, Role
+
+############
+# filters #
+############
 
 
 class LocalOrRemoteFilter(admin.SimpleListFilter):
@@ -23,9 +30,44 @@ class LocalOrRemoteFilter(admin.SimpleListFilter):
         return qs
 
 
+#########
+# forms #
+#########
+class UserAdminForm(DjangoUserAdminForm):
+    """
+    Custom form which lets me choose from valid Organizations & Roles
+    """
+    class Meta:
+        model = User
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["organization_name"].help_text = _(
+            "The name of the organization this user belongs to."
+        )
+        self.fields["organization_name"].widget = DataListWidget(
+            name="organization_name",
+            options=[
+                organization.name for organization in Organization.objects.all()
+            ],
+        )
+        self.fields["role_name"].help_text = _(
+            "The name of the role this user belongs to."
+        )
+        self.fields["role_name"].widget = DataListWidget(
+            name="role_name",
+            options=[role.name for role in Role.objects.all()],
+        )
+
+
+##########
+# admins #
+##########
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     model = User
+    form = UserAdminForm
     actions = ()
     add_fieldsets = ((
         None,

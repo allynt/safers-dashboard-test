@@ -1,3 +1,4 @@
+from typing import Iterable, Optional
 import uuid
 
 from django.contrib.auth.base_user import BaseUserManager
@@ -8,6 +9,8 @@ from django.db import models
 from django.db.models.expressions import ExpressionWrapper
 from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
+
+from model_utils import FieldTracker
 
 from safers.users.models import Organization, Role
 
@@ -97,6 +100,9 @@ class User(AbstractUser):
 
     objects = UserManager.from_queryset(UserQuerySet)()
 
+    tracker = FieldTracker()
+
+    # remove these fields, as they should form part of the UserProfile
     first_name = None
     last_name = None
 
@@ -134,7 +140,7 @@ class User(AbstractUser):
         max_length=64,
         choices=UserStatus.choices,
         default=UserStatus.PENDING,
-        help_text=_("What stage of registration is this user at?")
+        help_text=_("What stage of registration is this user at?"),
     )
 
     organization_name = models.CharField(
@@ -158,6 +164,11 @@ class User(AbstractUser):
         return self.auth_id is not None
 
     @property
+    def is_citizen(self):
+        role = self.role
+        return role and role.is_citizen
+
+    @property
     def organization(self):
         try:
             return Organization.objects.get(name=self.organization_name)
@@ -170,3 +181,10 @@ class User(AbstractUser):
             return Role.objects.get(name=self.role_name)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             pass
+
+    def save(self, *args, **kwargs):
+        if self.tracker.has_changed("status"):
+            # TODO: DO SOMETHING WITH SIGNALS HERE ?
+            old_status = self.tracker.previous("status")
+            new_status = self.status
+        return super().save(*args, **kwargs)

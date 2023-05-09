@@ -24,7 +24,7 @@ class OrganizationView(ListAPIView):
     def get_queryset(self):
         """
         Using the get_queryset method instead of the queryset attribute.  This
-        provides graceful error handling when access safers-gateway.  It also 
+        provides graceful error handling when accessing safers-gateway.  It also 
         prevents that API from being accessed during swagger schema generation;
         Instead the swagger_fake decorator intenrcepts this call.
         """
@@ -33,8 +33,3 @@ class OrganizationView(ListAPIView):
             return queryset
         except Exception as e:
             raise APIException(e) from e
-
-    # def list(self, request, *args, **kwargs):
-    #     try:
-    #         return super().list(request, *args, **kwargs)
-    #     except E
