@@ -1,3 +1,7 @@
+"""
+mock data to use during development/testing
+"""
+
 MOCK_ORGANIZATIONS_DATA = [
     {
         "id": 1,

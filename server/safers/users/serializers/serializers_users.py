@@ -53,9 +53,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(UserSerializer):
+    # TODO: DO I REALLY NEED A SEPARATE SERIALIZER IF THESE ARE write_only FIELDS ?
     """
-    Used during registration; Includes fields that should not be changed
-    (and are not needed) after the initial user creation.
+    Includes fields that should not be changed (and are not needed)
+    after the initial user creation.
     """
     class Meta:
         model = User

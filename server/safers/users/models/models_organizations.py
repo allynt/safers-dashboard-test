@@ -20,6 +20,7 @@ class OrganizationManager(CachedTransientModelManager):
     cache_key = "organizations"
 
     def get_transient_queryset_data(self):
+        # TODO: USE GATEWAY_CLIENT
         GET_ORGANIZATIONS_PATH = "/api/services/app/Profile/GetOrganizations"
         response = requests.get(
             urljoin(settings.SAFERS_GATEWAY_URL, GET_ORGANIZATIONS_PATH),

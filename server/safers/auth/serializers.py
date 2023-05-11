@@ -4,7 +4,7 @@ ModelSerializers; They are used for validation of request data only.
 Interacting with the underlying models is not done by DRF but by proxying
 the requests to the actual FusionAuth endpoints.
 """
-
+from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password as django_validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -17,7 +17,9 @@ from drf_spectacular.utils import extend_schema_serializer
 from safers.core.models import SafersSettings
 from safers.core.serializers import ContextVariableDefault
 
-from safers.users.models import User, Organization, Role
+from safers.users.models import Organization, Role
+
+UserModel = get_user_model()
 
 
 def validate_password(validated_data):
@@ -30,17 +32,21 @@ def validate_password(validated_data):
     try:
         django_validate_password(
             validated_data["password"],
-            user=User(email=validated_data.get("email")),
+            user=UserModel(email=validated_data.get("email")),
         )
     except DjangoValidationError as exception:
         raise ValidationError({"password": exception.messages}) from exception
 
 
-@extend_schema_serializer(exclude_fields=["organization", "role"])
+@extend_schema_serializer(
+    exclude_fields=["organization", "role"]
+)  # TOOD: FIGURE OUT A BETTER WAY TO PREVENT drf-spectacular FROM QUEYRING THESE FIELDS
 class RegisterViewSerializer(serializers.Serializer):
-
+    """
+    Used to validate all the fields on the registration form.
+    """
     email = serializers.EmailField(
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=UserModel.objects.all())]
     )
 
     username = serializers.CharField(
@@ -92,7 +98,9 @@ class RegisterViewSerializer(serializers.Serializer):
 
 
 class AuthenticateViewSerializer(serializers.Serializer):
-
+    """
+    Used to validate the response from FusionAuth for the authorization_code_grant
+    """
     code = serializers.CharField(required=False)
     locale = serializers.CharField(required=False)
     userState = serializers.CharField(required=False)

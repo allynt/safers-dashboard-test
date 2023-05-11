@@ -11,7 +11,6 @@ class TokenAuthentication(AuthBase):
 
 
 class BearerAuthentication(TokenAuthentication):
-
     def __call__(self, request):
         request.headers["Authorization"] = "Bearer " + self.token
         return request

@@ -27,7 +27,6 @@ class RoleManager(CachedTransientModelManager):
     cache_key = "roles"
 
     def get_transient_queryset_data(self):
-
         auth_response = AUTH_CLIENT.retrieve_application(
             settings.FUSIONAUTH_APPLICATION_ID
         )
@@ -39,7 +38,7 @@ class RoleManager(CachedTransientModelManager):
             "roles", []
         )
 
-        roles_data = MOCK_ROLES_DATA
+        # roles_data = MOCK_ROLES_DATA
 
         return roles_data
 

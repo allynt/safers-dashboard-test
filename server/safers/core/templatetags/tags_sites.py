@@ -1,3 +1,6 @@
+"""
+Template tags related to Sites & SiteProfiles
+"""
 from django import template
 from django.contrib.sites.shortcuts import get_current_site
 

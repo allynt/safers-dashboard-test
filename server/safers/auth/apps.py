@@ -8,7 +8,6 @@ class AuthConfig(AppConfig):
     label = "safers_auth"  # unique label so as not to conflict w/ "django.contrib.auth"
 
     def ready(self):
-
         try:
             # register any checks...
             import safers.auth.checks

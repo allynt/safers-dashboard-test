@@ -291,11 +291,11 @@ DEFAULT_FROM_EMAIL = f"{PROJECT_NAME} <{PROJECT_EMAIL.format(role='noreply')}>" 
 # DRF - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        'rest_framework.authentication.BasicAuthentication',
+        "rest_framework.authentication.BasicAuthentication",
+        "safers.auth.authentication.OAuth2Authentication",
         # "rest_framework.authentication.SessionAuthentication",
         # "rest_framework.authentication.TokenAuthentication",
         # "oauth2_provider.contrib.rest_framework.OAuth2Authentication",
-        # "safers.auth.authentication.SwaggerOAuth2Authentcation",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
@@ -309,8 +309,11 @@ FILTERS_DEFAULT_LOOKUP_EXPR = "iexact"
 SPECTACULAR_SETTINGS = {
     "TITLE": f"{PROJECT_NAME} API",
     "DESCRIPTION": f"Documentation of API endpoints of {PROJECT_NAME}",
-    # (sidecar allows for local UI configuration)
-    "SWAGGER_UI_DIST": "SIDECAR",
+    # "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_AUTHENTICATION": [
+        "rest_framework.authentication.BasicAuthentication"
+    ],
+    "SWAGGER_UI_DIST": "SIDECAR",  # (sidecar allows for local UI configuration)
     "REDOC_DIST": "SIDECAR",
 }
 

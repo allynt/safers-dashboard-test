@@ -1,3 +1,8 @@
+"""
+Useful classes and function to use w/ serializers.
+"""
+
+
 class ContextVariableDefault(object):
     """
     May be applied as a `default=...` value on a serializer field
@@ -14,6 +19,6 @@ class ContextVariableDefault(object):
     def __call__(self, serializer_field):
         try:
             return serializer_field.context[self.variable_name]
-        except KeyError as e:
+        except KeyError as exception:
             if self.raise_error:
-                raise e
+                raise exception

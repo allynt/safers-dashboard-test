@@ -3,7 +3,7 @@ from urllib.parse import urljoin, urlencode
 
 from django.conf import settings
 
-REQUEST_TIMEOUT = 40
+REQUEST_TIMEOUT = 4
 
 requests_session = requests.Session()
 

@@ -171,17 +171,19 @@ class AuthenticateView(GenericAPIView):
     code from FusionAuth and returns an access_token for safers-dashboard.
     Creates/updates a local user as needed.
     """
+    authentication_classes = []
     permission_classes = [AllowLoginPermission]
     serializer_class = AuthenticateViewSerializer
 
     @extend_schema(
         request=AuthenticateViewSerializer,
+        responses={status.HTTP_200_OK: None},  # TODO: REPLACE W/ REAL CONTENT
     )
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # TODO: MODIFY THIS TO COPE W/ SWAGGER
+        # TODO: MODIFY THIS TO COPE W/ SWAGGER ?
         redirect_uri = settings.FUSIONAUTH_REDIRECT_URL
 
         # get token...
@@ -248,17 +250,25 @@ class AuthenticateView(GenericAPIView):
         user.last_login = timezone.now()
         user.save()
 
+        # check if the user satisfies all the login requirements...
+        # (such as is_active)
+        # TODO:
+
         data = {
-            "access_token": None,
-            "refresh_token": None,
+            "access_token": auth_token_data["access_token"],
+            # "refresh_token": auth_token_data["refresh_token"],
+            "expires_in": auth_token_data["expires_in"],
             "user_id": user.id,
         }
-
         return Response(
             data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
         )
 
+
+# TODO: REFRESH
+
+# TODO: LOGOUT
 
 #################
 # Django Views #

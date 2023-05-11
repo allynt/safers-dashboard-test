@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 class TransientModelQuerySet(UserList):
-    
+    """
+    A QuerySet for a TransientModels which aren't stored in the db.
+    """
     def get(self, **kwargs):
         
         matching_models = [
@@ -40,7 +42,10 @@ class TransientModelQuerySet(UserList):
             pass
 
 class CachedTransientModelManager(models.Manager):
-    
+    """
+    A manager for TransientModels which aren't stored in the db.  Also
+    allows for queryset_class to be cached.
+    """    
     queryset_class = TransientModelQuerySet
 
     cache_key = None
@@ -74,5 +79,10 @@ class CachedTransientModelManager(models.Manager):
         ])
 
     def filter(self, *args: Any, **kwargs: Any):
+        """
+        Don't allow generic filtering as the underlying TransientModel
+        isn't stored in the db.  Rather than monkey-patch this, just 
+        don't call it.
+        """
         raise NotImplementedError()
 

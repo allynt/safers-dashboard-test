@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.urls import path
 
 from .views import (
@@ -23,9 +22,5 @@ api_urlpatterns = [
 
 urlpatterns = [
     path("auth/login", login_view, name="auth-login"),
+    path("auth/callback", callback_view, name="auth-callback"),
 ]
-
-if settings.DEBUG:
-    urlpatterns += [
-        path("auth/callback", callback_view, name="auth-callback"),
-    ]

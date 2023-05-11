@@ -26,12 +26,12 @@ FormatMap = {
 class ColoredFormatter(ServerFormatter):
     """
     A custom logging formatter to use in development.  Makes different 
-    log levels stand out w/ pretty colors.  (Just helps when there are 
-    loads of messages to sift through.)
+    log levels stand out w/ pretty colors.  (Just helps during development
+    when there are loads of messages to sift through.)
     """
     def format(self, record):
 
-        default_msg = super().format(record)
+        msg = super().format(record)
         colored_msg_prefix = FormatMap.get(record.levelno, Colors.DEFAULT.value)
         colored_msg_suffix = Colors.DEFAULT.value
-        return colored_msg_prefix + default_msg + colored_msg_suffix
+        return colored_msg_prefix + msg + colored_msg_suffix

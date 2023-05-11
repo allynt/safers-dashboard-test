@@ -10,7 +10,7 @@ class DataListWidget(forms.TextInput):
         self._options = options
         self.attrs.update({
             "list": f"datalist-{self._name}",
-            "size": 30,
+            "size": 30,  # TODO: ALLOW SIZE TO HAVE A DEFAULT VALUE
         })
 
     def render(self, name, value, attrs=None, renderer=None):
@@ -20,4 +20,4 @@ class DataListWidget(forms.TextInput):
             data_list += f"<option value='{option}'>"
         data_list += "</datalist>"
 
-        return (rendered_html + data_list)
+        return rendered_html + data_list

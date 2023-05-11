@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm as DjangoUserAdminForm
-from django.forms import ChoiceField
 from django.utils.translation import gettext_lazy as _
 
 from safers.core.widgets import DataListWidget
@@ -19,6 +18,7 @@ class LocalOrRemoteFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
+            # notice this uses the calculated fields from the custom UserManager
             ("_is_local", _("Local")),
             ("_is_remote", _("Remote")),
         )
@@ -149,8 +149,10 @@ class UserAdmin(DjangoUserAdmin):
     ordering = ("email", )
 
     @admin.display(description="AUTHENTICATION TYPE")
-    def get_authentication_type_for_list_display(self, instance):
+    def get_authentication_type_for_list_display(self, instance) -> str:
+        authentication_type = "unknown"
         if instance.is_local:
-            return "local"
+            authentication_type = "local"
         elif instance.is_remote:
-            return "remote"
+            authentication_type = "remote"
+        return authentication_type
