@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Safers Client [dev]</title>
+    </head>
+    <style>
+        #client {
+            border: 1px solid orange;
+            margin: 1rem;
+            padding: 1rem;
+            font-size: x-large;
+        }
+    </style>
+    <body>
+        <div id="client">
+            <p>
+                This is a dummy safers client for development purposes.
+            </p>
+            <p>
+                It provides a login screen which just forwards the callback from FusionAuth to safers-dashboard-api
+                in order to output the token, etc. to use for swagger authentication.
+            </p>
+            <ul>
+                <li>login:&nbsp;<a href="{% url 'login' %}">{% url 'login' %}</a></li>
+                <li>callback:&nbsp;<a href="{% url 'callback' %}">{% url 'callback' %}</a></li>
+            </ul>
+        </div>
+    </body>
+</html>

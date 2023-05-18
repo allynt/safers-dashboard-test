@@ -1,0 +1,21 @@
+[tool.pdm]
+
+[project]
+# name = ""
+# version = ""
+authors = [
+    {name = "Astrosat", email = "info@astrosat.net"},
+]
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "django>=4.2.1",
+    "django-environ>=0.10.0",
+    "requests>=2.30.0",
+]
+
+[tool.pdm.scripts]
+echo = "figlet -t --font standard 'safers (dev) client'"
+runserver = "manage.py runserver 3000"
+client = {composite = ["echo", "runserver"]}

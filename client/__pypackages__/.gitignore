@@ -1,0 +1,4 @@
+# don't include the contents of the __pypackages__ directory
+*
+*/
+!.gitignore
