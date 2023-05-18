@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from enum import Enum
 import uuid
 
 from django.contrib.auth.base_user import BaseUserManager
@@ -12,11 +12,34 @@ from django.utils.translation import gettext_lazy as _
 
 from model_utils import FieldTracker
 
+from safers.core.authentication import TokenAuthentication
+from safers.core.clients import GATEWAY_CLIENT
+
 from safers.users.models import Organization, Role
 
 ###########
 # helpers #
 ###########
+
+PROFILE_FIELDS = [
+    # profile fields to retain from gateway
+    "user",
+    "organizationId",
+    "teamId",
+    "personId",
+    "isFirstLogin",
+    "isNewUser",
+    "taxCode",
+]
+
+
+class ProfileDirection(str, Enum):
+    """
+    Indicates whether to synchronize the profile from the dashboard
+    (local) to the gateway (remote).
+    """
+    LOCAL_TO_REMOTE = "local_to_remote"
+    REMOTE_TO_LOCAL = "remote_to_local"
 
 
 class UserStatus(models.TextChoices):
@@ -155,32 +178,77 @@ class User(AbstractUser):
         null=True,
     )
 
+    profile = models.JSONField(
+        default=dict,
+        help_text=_(
+            "JSON representation of profile; used for synchronization w/ gateway."
+        ),
+    )
+
     @property
-    def is_local(self):
+    def is_local(self) -> bool:
         return self.auth_id is None
 
     @property
-    def is_remote(self):
+    def is_remote(self) -> bool:
         return self.auth_id is not None
 
     @property
-    def is_citizen(self):
+    def is_citizen(self) -> bool:
         role = self.role
         return role and role.is_citizen
 
     @property
-    def organization(self):
+    def organization(self) -> Organization | None:
         try:
             return Organization.objects.get(name=self.organization_name)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             pass
 
     @property
-    def role(self):
+    def role(self) -> Role | None:
         try:
             return Role.objects.get(name=self.role_name)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             pass
+
+    def synchronize_profile(
+        self, token: str, direction: ProfileDirection
+    ) -> None:
+        """
+        synchronize UserProfile information bewteen the dashboard and gateway
+        """
+        if direction == ProfileDirection.REMOTE_TO_LOCAL:
+            remote_profile_data = GATEWAY_CLIENT.get_profile(
+                auth=TokenAuthentication(token)
+            )
+            self.profile = {
+                k: v
+                for k,
+                v in remote_profile_data["profile"].items()
+                if k in PROFILE_FIELDS
+            }
+            # don't forget to update role & organization...
+            self.role_name = next(
+                iter(remote_profile_data["profile"]["user"].get("roles", [])),
+                None
+            )
+            self.organization_name = remote_profile_data["profile"].get(
+                "organization", {}
+            ).get("name", None)
+
+        elif direction == ProfileDirection.LOCAL_TO_REMOTE:
+            local_profile_data = dict(
+                organizationId=self.organization.id
+                if self.organization else None,
+                **(self.profile)
+            )
+            GATEWAY_CLIENT.update_profile(
+                auth=TokenAuthentication(token), data=local_profile_data
+            )
+
+        else:
+            raise ValueError(f"Unknown direction: '{direction}'.")
 
     def save(self, *args, **kwargs):
         if self.tracker.has_changed("status"):

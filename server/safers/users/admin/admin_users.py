@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm as DjangoUserAdminForm
 from django.utils.translation import gettext_lazy as _
 
-from safers.core.widgets import DataListWidget
+from safers.core.widgets import DataListWidget, JSONWidget
 from safers.users.models import User, Organization, Role
 
 ############
@@ -33,9 +33,12 @@ class LocalOrRemoteFilter(admin.SimpleListFilter):
 #########
 # forms #
 #########
+
+
 class UserAdminForm(DjangoUserAdminForm):
     """
-    Custom form which lets me choose from valid Organizations & Roles
+    Custom form w/ some pretty fields; formats the profile
+    and lets me choose from valid Organizations & Roles
     """
     class Meta:
         model = User
@@ -59,6 +62,7 @@ class UserAdminForm(DjangoUserAdminForm):
             name="role_name",
             options=[role.name for role in Role.objects.all()],
         )
+        self.fields["profile"].widget = JSONWidget()
 
 
 ##########
@@ -112,12 +116,15 @@ class UserAdmin(DjangoUserAdmin):
                 "fields": ("last_login", "date_joined")
             }
         ),
-        (_("Safers"), {
-            "fields": (
-                "organization_name",
-                "role_name",
-            )
-        }),
+        (
+            _("Safers"), {
+                "fields": (
+                    "organization_name",
+                    "role_name",
+                    "profile",
+                )
+            }
+        ),
     )
     filter_horizontal = (
         "groups",
@@ -133,10 +140,14 @@ class UserAdmin(DjangoUserAdmin):
         "accepted_terms",
         "status",
         "get_authentication_type_for_list_display",
+        "organization_name",
+        "role_name",
     )
     list_filter = (
         LocalOrRemoteFilter,
         "status",
+        "organization_name",
+        "role_name",
     ) + DjangoUserAdmin.list_filter
     readonly_fields = (
         "id",

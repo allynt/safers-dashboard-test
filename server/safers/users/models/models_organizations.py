@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.db import models
 
+from safers.core.clients import GATEWAY_CLIENT
 from safers.core.managers import CachedTransientModelManager, TransientModelQuerySet
 
 from safers.users.tests.mocks import MOCK_ORGANIZATIONS_DATA
@@ -20,15 +21,8 @@ class OrganizationManager(CachedTransientModelManager):
     cache_key = "organizations"
 
     def get_transient_queryset_data(self):
-        # TODO: USE GATEWAY_CLIENT
-        GET_ORGANIZATIONS_PATH = "/api/services/app/Profile/GetOrganizations"
-        response = requests.get(
-            urljoin(settings.SAFERS_GATEWAY_URL, GET_ORGANIZATIONS_PATH),
-            params={"MaxResultCount": 1000},
-            timeout=4,
-        )
-        response.raise_for_status()
-        organizations_data = response.json()["data"]
+        response = GATEWAY_CLIENT.get_organizations(timeout=10)
+        organizations_data = response["data"]
 
         # organizations_data = MOCK_ORGANIZATIONS_DATA
 

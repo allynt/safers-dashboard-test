@@ -1,13 +1,12 @@
 import logging
-import requests
 from urllib.parse import urljoin, urlencode
 
 from django.conf import settings
+from django.contrib.auth import logout
 from django.db import transaction
-from django.http import JsonResponse
-from django.shortcuts import redirect
-from django.urls import reverse
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 
 from rest_framework import status
 from rest_framework.exceptions import APIException
@@ -17,18 +16,17 @@ from rest_framework.response import Response
 
 from drf_spectacular.utils import extend_schema, OpenApiExample
 
-from safers.core.authentication import TokenAuthentication
-from safers.core.clients import GATEWAY_CLIENT
+from safers.core.models import SafersSettings
 
-from safers.users.models import User, UserProfile, UserStatus
-from safers.users.serializers import UserSerializer, UserCreateSerializer
-from safers.users.utils import reshape_profile_data, ProfileDirection
+from safers.users.models import User, UserStatus, ProfileDirection
 
 from safers.auth.clients import AUTH_CLIENT
 from safers.auth.permissions import AllowRegistrationPermission, AllowLoginPermission
 from safers.auth.serializers import (
     RegisterViewSerializer,
     AuthenticateViewSerializer,
+    RefreshViewSerializer,
+    TokenSerializer,
 )
 from safers.auth.signals import user_registered_signal
 from safers.auth.utils import reshape_auth_errors
@@ -76,7 +74,7 @@ class RegisterView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         organization = serializer.validated_data.pop("organization")
-        team = None
+        team = None  # TODO: CANNOT SET TEAM IN DASHBOARD YET
         role = serializer.validated_data.pop("role")
         accepted_terms = serializer.validated_data.pop("accepted_terms")
 
@@ -103,57 +101,18 @@ class RegisterView(GenericAPIView):
             username=auth_user_data["username"],
             accepted_terms=accepted_terms,
         )
-        user.save()
-        # (using get_or_create instead of just user.profile in case of race conditions w/ User PostSaveSignal)
-        user_profile, _ = UserProfile.objects.get_or_create(user=user)
-        user_profile.first_name = auth_user_data["firstName"]
-        user_profile.last_name = auth_user_data["lastName"]
-        user_profile.save()
-
-        # user_serializer = UserCreateSerializer(
-        #     data=dict(
-        #         accepted_terms=accepted_terms,
-        #         **(
-        #             reshape_profile_data(
-        #                 remote_profile_data,
-        #                 direction=ProfileDirection.REMOTE_TO_LOCAL,
-        #             )
-        #         )
-        #     )
-        # )
-        # user_serializer.is_valid(raise_exception=True)
-        # user = user_serializer.save()
 
         # update remote user...
-        # TODO: I WOULD PREFER TO DO THIS IN AuthenticateView BELOW,
-        # TODO: BUT I'M THINKING EDGE CASES WHERE AFTER RegisterView
-        # TODO: THE USER LOGS INTO SOME OTHER SAFERS CLIENT (LIKE THE
-        # TODO: CHATBOT) BEFORE ACTUALLY LOGGING INTO THE DASHBOARD.
         try:
-            auth = TokenAuthentication(auth_token)
-            remote_profile_data = {
-                k: v
-                for k, v in GATEWAY_CLIENT.get_profile(auth=auth)["profile"].items()
-                if k in [
-                    "user",
-                    "organizationId",
-                    "teamId",
-                    "personId",
-                    "isFirstLogin",
-                    "isNewUser",
-                    "taxCode",
-                ]
-            }  # yapf: disable
-            remote_profile_data = GATEWAY_CLIENT.update_profile(
-                auth=auth,
-                data=dict(
-                    organizationId=organization.id if organization else None,
-                    teamId=team.id if team else None,
-                    **remote_profile_data
-                )
+            user.synchronize_profile(
+                auth_token, ProfileDirection.REMOTE_TO_LOCAL
             )
-        except Exception as e:
-            raise APIException(e) from e
+            user.synchronize_profile(
+                auth_token, ProfileDirection.LOCAL_TO_REMOTE
+            )
+            user.save()
+        except Exception as exception:
+            raise APIException(exception.message) from exception
 
         # signal the registration...
         user_registered_signal.send(
@@ -177,7 +136,7 @@ class AuthenticateView(GenericAPIView):
 
     @extend_schema(
         request=AuthenticateViewSerializer,
-        responses={status.HTTP_200_OK: None},  # TODO: REPLACE W/ REAL CONTENT
+        responses={status.HTTP_200_OK: TokenSerializer},
     )
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -218,70 +177,99 @@ class AuthenticateView(GenericAPIView):
 
         # update user as needed...
         if user.status == UserStatus.PENDING:
-            auth = TokenAuthentication(auth_token_data["access_token"])
             if created:
                 # user was not yet created in the dashboard...
                 # (therefore get remote details and save locally)
-                remote_profile_data = GATEWAY_CLIENT.get_profile(auth=auth)
-                UserCreateSerializer().update(
-                    user,
-                    reshape_profile_data(
-                        remote_profile_data,
-                        direction=ProfileDirection.REMOTE_TO_LOCAL,
-                    )
+                user.synchronize_profile(
+                    auth_token_data["access_token"],
+                    ProfileDirection.REMOTE_TO_LOCAL
                 )
             else:
+
                 # user was already created in the dashboard...
                 # (therefore get local details and save remotely)
-                logger.info(
-                    "user already created - waiting to update remote user until PATCH is implemented"
+                # TODO: MAY NOT NEED TO DO THIS B/C I'VE ALREADY DONE IT IN RegisterView
+                user.synchronize_profile(
+                    auth_token_data["access_token"],
+                    ProfileDirection.LOCAL_TO_REMOTE
                 )
-                # local_profile_data = UserSerializer(instance=user).data
-                # GATEWAY_CLIENT.update_profile(
-                #     auth=auth,
-                #     data=reshape_profile_data(
-                #         local_profile_data,
-                #         direction=ProfileDirection.LOCAL_TO_REMOTE,
-                #     )
-                # )
-
             user.status = UserStatus.COMPLETED
 
         user.last_login = timezone.now()
         user.save()
 
         # check if the user satisfies all the login requirements...
-        # (such as is_active)
-        # TODO:
+        # (such as is_active, accepted_terms, etc.)
+        # TODO: ...
 
-        data = {
-            "access_token": auth_token_data["access_token"],
-            # "refresh_token": auth_token_data["refresh_token"],
-            "expires_in": auth_token_data["expires_in"],
-            "user_id": user.id,
-        }
+        token_serializer = TokenSerializer(
+            data=dict(user_id=user.id, **auth_token_data)
+        )
+        token_serializer.is_valid(raise_exception=True)
+        token_serializer.save()
+
         return Response(
-            data,
+            token_serializer.validated_data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
         )
 
 
-# TODO: REFRESH
+class RefreshView(GenericAPIView):
 
-# TODO: LOGOUT
+    serializer_class = RefreshViewSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        # TODO: MAYBE ADD REFRESH_TOKEN TO CONTEXT ?
+        # context["refresh_token"] = ? BUT IF USER IS DOING THIS THEY CANNOT BE AUTHENTICATED
+        return context
+
+    @extend_schema(
+        request=RefreshViewSerializer,
+        responses={status.HTTP_200_OK: TokenSerializer},
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        auth_token_response = AUTH_CLIENT.exchange_refresh_token_for_access_token(
+            refresh_token=serializer.validated_data["refresh_token"],
+            client_id=settings.FUSIONAUTH_CLIENT_ID,
+            client_secret=settings.FUSION_AUTH_CLIENT_SECRET,
+        )
+        if not auth_token_response.was_successful():
+            errors = reshape_auth_errors(auth_token_response.error_response)
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        auth_token_data = auth_token_response.success_response
+
+        user = User.objects.get(auth_id=auth_token_data["userId"])
+        user.refresh_tokens.filter(
+            token=serializer.validated_data["refresh_token"]
+        ).delete()
+
+        token_serializer = TokenSerializer(
+            data=dict(user_id=user.id, **auth_token_data)
+        )
+        token_serializer.is_valid(raise_exception=True)
+        token_serializer.save()
+
+        return Response(
+            token_serializer.validated_data, status=status.HTTP_200_OK
+        )
+
 
 #################
 # Django Views #
 #################
 
 
+@require_http_methods(["GET"])
 def login_view(request):
     """"
-    Login via FusionAuth. (This is a normal Django view as opposed to
-    a DRF view.)
+    Login via FusionAuth and then redirect to the client callback.
+    That callback should make a request to AuthenticateView above.
     """
     AUTHENTICATION_CODE_GRANT_PATH = "oauth2/authorize"
-
     base_auth_url = urljoin(
         settings.FUSIONAUTH_EXTERNAL_URL, AUTHENTICATION_CODE_GRANT_PATH
     )
@@ -294,26 +282,29 @@ def login_view(request):
     })
     auth_url = f"{base_auth_url}?{auth_url_params}"
 
-    response = redirect(auth_url)
-    return response
+    return HttpResponseRedirect(auth_url)
 
 
-def callback_view(request):
+@require_http_methods(["GET", "POST"])
+def logout_view(request):
+    """"
+    Logout in Django then logout via FusionAuth and then redirect to
+    the client callback.
     """
-    This simple callback acts as a pretend callback.  It is used for
-    development only.  It just passes on the code (or the error) returned
-    by FusionAuth login ot the AuthenticateView above.  Manually copying
-    the code into the AuthenticateView via swagger cannot be done before
-    the code expires.
-    """
-    data = request.GET
-    logger.info(data)
+    safers_settings = SafersSettings.load()
+    if request.method == "GET" and not safers_settings.allow_logout_via_get:
+        return HttpResponseNotAllowed(["POST"])
 
-    authenticate_response = requests.post(
-        request.build_absolute_uri(reverse("auth-authenticate")),
-        data=data,
-        timeout=4,
-    )
-    return JsonResponse(
-        authenticate_response.json(), authenticate_response.status
-    )
+    user = request.user
+    user.refresh_tokens.all().delete()
+    logout(request)
+
+    LOGOUT_PATH = "oauth2/logout"
+    base_auth_url = urljoin(settings.FUSIONAUTH_EXTERNAL_URL, LOGOUT_PATH)
+    auth_url_params = urlencode({
+        "client_id": settings.FUSIONAUTH_CLIENT_ID,
+        "tenant_id": settings.FUSIONAUTH_TENANT_ID,
+        "post_logout_redirect_uri": settings.FUSIONAUTH_REDIRECT_URL,
+    })
+    auth_url = f"{base_auth_url}?{auth_url_params}"
+    return HttpResponseRedirect(auth_url)

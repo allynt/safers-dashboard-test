@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.decorators import user_passes_test
 from django.urls import include, path
+from django.views.generic.base import TemplateView
 
 from rest_framework import routers
 
@@ -46,16 +47,10 @@ swagger_restriction = user_passes_test(
 api_schema_views = [
     path(
         "swagger/",
-        swagger_restriction(
-            SpectacularSwaggerView.as_view(url_name="api-schema")
-        ),
-        name="api-docs",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger",
     ),
-    path(
-        "schema/",
-        swagger_restriction(SpectacularAPIView.as_view()),
-        name="api-schema"
-    ),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]
 
 ##############
@@ -80,13 +75,16 @@ urlpatterns = [
     # django admin...
     path(settings.ADMIN_URL, admin.site.urls),
 
+    # index...
+    path("", TemplateView.as_view(template_name="index.html"), name="index"),
+
     # API...
     path("api/", include(api_urlpatterns)),
 
     # app-specific patterns (just in case)...
-    path("", include(core_urlpatterns)),
-    path("", include(auth_urlpatterns)),
-    path("", include(users_urlpatterns)),
+    path("core/", include(core_urlpatterns)),
+    path("auth/", include(auth_urlpatterns)),
+    path("users/", include(users_urlpatterns)),
 ]
 
 # local static & media files...

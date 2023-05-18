@@ -29,6 +29,7 @@ class GatewayClient(object):
             auth=auth,
             timeout=timeout,
         )
+        response.raise_for_status()
         return response.json()
     
     def update_profile(self, data=None, auth=None, timeout=REQUEST_TIMEOUT):
@@ -41,6 +42,25 @@ class GatewayClient(object):
             auth=auth,
             timeout=timeout,
         )
+        response.raise_for_status()
+        return response.json()
+
+    def get_organizations(self, params=None, auth=None, timeout=REQUEST_TIMEOUT) -> dict:
+        url = urljoin(settings.SAFERS_GATEWAY_URL, f"{self.PROFILE_PATH}/GetOrganizations")
+
+        default_params = {"MaxResultCount": 1000}
+        if params:
+            default_params.update(params)
+
+        response = requests_session.request(
+            method="GET",
+            headers=self.headers,
+            url=url,
+            params=default_params,
+            auth=auth,
+            timeout=timeout,
+        )
+        response.raise_for_status()
         return response.json()
 
 GATEWAY_CLIENT = GatewayClient()
