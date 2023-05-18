@@ -24,7 +24,7 @@ class OAuth2Authentication(BaseAuthentication):
         """
         access_token = self.get_access_token(request)
         if not access_token:
-            raise AuthenticationFailed()
+            return None
 
         auth_jwt_response = AUTH_CLIENT.validate_jwt(access_token)
         if not auth_jwt_response.was_successful():

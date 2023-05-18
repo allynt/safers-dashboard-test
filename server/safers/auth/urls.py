@@ -3,8 +3,9 @@ from django.urls import path
 from .views import (
     RegisterView,
     AuthenticateView,
+    RefreshView,
     login_view,
-    callback_view,
+    logout_view,
 )
 
 api_urlpatterns = [
@@ -18,9 +19,14 @@ api_urlpatterns = [
         AuthenticateView.as_view(),
         name="auth-authenticate",
     ),
+    path(
+        "auth/refresh",
+        RefreshView.as_view(),
+        name="auth-refresh",
+    ),
 ]
 
 urlpatterns = [
-    path("auth/login", login_view, name="auth-login"),
-    path("auth/callback", callback_view, name="auth-callback"),
+    path("login", login_view, name="auth-login"),
+    path("logout", logout_view, name="auth-logout"),
 ]

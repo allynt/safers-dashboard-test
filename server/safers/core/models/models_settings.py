@@ -32,6 +32,11 @@ class SafersSettings(SingletonMixin, models.Model):
         ),
     )
 
+    allow_logout_via_get = models.BooleanField(
+        default=False,
+        help_text=_("Allow users to logout via GET as well as POST."),
+    )
+
     request_timeout = models.FloatField(
         default=6000,
         validators=[MinValueValidator(0)],

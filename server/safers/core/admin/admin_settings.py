@@ -10,5 +10,6 @@ class OrbisonSettingsAdmin(admin.ModelAdmin):
         "allow_signup",
         "allow_password_change",
         "require_terms_acceptance",
+        "allow_logout_via_get",
         "request_timeout",
     )

@@ -310,9 +310,9 @@ SPECTACULAR_SETTINGS = {
     "TITLE": f"{PROJECT_NAME} API",
     "DESCRIPTION": f"Documentation of API endpoints of {PROJECT_NAME}",
     # "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
-    "SERVE_AUTHENTICATION": [
-        "rest_framework.authentication.BasicAuthentication"
-    ],
+    # "SERVE_AUTHENTICATION": [
+    #     "rest_framework.authentication.BasicAuthentication"
+    # ],
     "SWAGGER_UI_DIST": "SIDECAR",  # (sidecar allows for local UI configuration)
     "REDOC_DIST": "SIDECAR",
 }

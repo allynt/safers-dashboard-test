@@ -112,3 +112,7 @@ class AuthenticateViewSerializer(serializers.Serializer):
         if error:
             raise ValidationError(error)
         return validated_data
+
+
+class RefreshViewSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField(required=False)
